@@ -1,26 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
+import "./App.css";
+
+import type {
+  CardType,
+  ClosingDraft,
+  ClosingMap,
+  ClosingPatch,
+  Status,
+} from "./types";
+import { AddCardForm } from "./features/cards/AddCardForm";
+import { Board } from "./features/cards/Board";
 
 const STORAGE_KEY = "learning_log_cards_v1";
 
-type Status = "planned" | "doing" | "done";
-
-type CardType = {
-  id: string;
-  title: string;
-  hypothesis: string;
-  success: string;
-  status: Status;
-
-  result: string;
-  learning: string;
-};
-
-type ClosingDraft = {
-  result: string;
-  learning: string;
-};
-
-type ClosingMap = Record<string, ClosingDraft>;
+const emptyDraft: ClosingDraft = { result: "", learning: "" };
 
 export default function App() {
   const [cards, setCards] = useState<CardType[]>([]);
@@ -38,8 +31,8 @@ export default function App() {
       try {
         const saved = JSON.parse(raw);
         if (Array.isArray(saved)) {
-          const normalized = saved.map((x: any) => {
-            const status =
+          const normalized: CardType[] = saved.map((x: any) => {
+            const status: Status =
               x?.status === "planned" ||
               x?.status === "doing" ||
               x?.status === "done"
@@ -59,14 +52,15 @@ export default function App() {
 
           setCards(normalized);
         }
-      } catch {}
+      } catch {
+        // ignore
+      }
     }
     setHydrated(true);
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
-
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
   }, [cards, hydrated]);
 
@@ -118,10 +112,10 @@ export default function App() {
     }));
   }
 
-  function updateClosing(id: string, patch: Partial<ClosingDraft>) {
+  function updateClosing(id: string, patch: ClosingPatch) {
     setClosing((prev) => ({
       ...prev,
-      [id]: { ...(prev[id] || { result: "", learning: "" }), ...patch },
+      [id]: { ...(prev[id] ?? emptyDraft), ...patch },
     }));
   }
 
@@ -145,8 +139,8 @@ export default function App() {
 
     setCards((prev) =>
       prev.map((c) =>
-        c.id === id ? { ...c, status: "done", result, learning } : c
-      )
+        c.id === id ? { ...c, status: "done", result, learning } : c,
+      ),
     );
 
     cancelClosing(id);
@@ -154,11 +148,11 @@ export default function App() {
 
   const planned = useMemo(
     () => cards.filter((c) => c.status === "planned"),
-    [cards]
+    [cards],
   );
   const doing = useMemo(
     () => cards.filter((c) => c.status === "doing"),
-    [cards]
+    [cards],
   );
   const done = useMemo(() => cards.filter((c) => c.status === "done"), [cards]);
 
@@ -166,114 +160,30 @@ export default function App() {
     <div style={{ padding: 16, maxWidth: 1100, margin: "0 auto" }}>
       <h1>Learning Log (Step 3)</h1>
 
-      <form
+      <AddCardForm
+        title={title}
+        hypothesis={hypothesis}
+        success={success}
+        setTitle={setTitle}
+        setHypothesis={setHypothesis}
+        setSuccess={setSuccess}
         onSubmit={addCard}
-        style={{ display: "grid", gap: 8, maxWidth: 900 }}
-      >
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="タイトル"
-        />
-        <input
-          value={hypothesis}
-          onChange={(e) => setHypothesis(e.target.value)}
-          placeholder="仮設(予想)"
-        />
-        <input
-          value={success}
-          onChange={(e) => setSuccess(e.target.value)}
-          placeholder="成功条件"
-        />
-        <button type="submit">追加</button>
-      </form>
+      />
 
       <hr />
 
-      <div
-        style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr 1fr" }}
-      >
-        <Column title="Planned" items={planned}>
-          {(c) => (
-            <Card key={c.id} c={c} onDelete={() => deleteCard(c.id)}>
-              <button onClick={() => setStatus(c.id, "doing")}>Doingへ</button>
-            </Card>
-          )}
-        </Column>
-
-        <Column title="Doing" items={doing}>
-          {(c) => {
-            const isClosing = Boolean(closing[c.id]);
-
-            return (
-              <Card key={c.id} c={c} onDelete={() => deleteCard(c.id)}>
-                {!isClosing ? (
-                  <>
-                    <button onClick={() => startClosing(c.id)}>
-                      Done (入力へ)
-                    </button>
-                    <button onClick={() => setStatus(c.id, "planned")}>
-                      plannedに戻る
-                    </button>
-                  </>
-                ) : (
-                  <div
-                    style={{
-                      display: "grid",
-                      gap: 8,
-                      width: "100%",
-                      marginTop: 10,
-                    }}
-                  >
-                    <textarea
-                      value={closing[c.id].result}
-                      onChange={(e) =>
-                        updateClosing(c.id, { result: e.target.value })
-                      }
-                      placeholder="結果"
-                    />
-                    <textarea
-                      value={closing[c.id].learning}
-                      onChange={(e) =>
-                        updateClosing(c.id, { learning: e.target.value })
-                      }
-                      placeholder="学び(原因)"
-                    />
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      <button onClick={() => confirmDone(c.id)}>
-                        完了確定
-                      </button>
-                      <button onClick={() => cancelClosing(c.id)}>
-                        キャンセル
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </Card>
-            );
-          }}
-        </Column>
-
-        <Column title="Done (見返し)" items={done}>
-          {(c) => (
-            <Card key={c.id} c={c} onDelete={() => deleteCard(c.id)}>
-              <div style={{ marginTop: 8 }}>
-                <div>
-                  <strong>結果:</strong>
-                  {c.result}
-                </div>
-                <div>
-                  <strong>学び</strong>
-                  {c.learning}
-                </div>
-              </div>
-              <button onClick={() => setStatus(c.id, "doing")}>
-                Doingに戻す
-              </button>
-            </Card>
-          )}
-        </Column>
-      </div>
+      <Board
+        planned={planned}
+        doing={doing}
+        done={done}
+        closing={closing}
+        onDeleteCard={deleteCard}
+        onSetStatus={setStatus}
+        onStartClosing={startClosing}
+        onUpdateClosing={updateClosing}
+        onCancelClosing={cancelClosing}
+        onConfirmDone={confirmDone}
+      />
 
       <hr />
 
@@ -290,48 +200,5 @@ export default function App() {
         )}
       </ul>
     </div>
-  );
-}
-
-function Column(props: {
-  title: string;
-  items: CardType[];
-  children: (c: CardType) => React.ReactNode;
-}) {
-  const { title, items, children } = props;
-
-  return (
-    <section style={{ border: "1px solid #ddd", padding: 12 }}>
-      <h2>
-        {title} <span style={{ fontSize: 12 }}>({items.length})</span>
-      </h2>
-      <div style={{ display: "grid", gap: 10 }}>
-        {items.length === 0 ? <div>なし</div> : items.map(children)}
-      </div>
-    </section>
-  );
-}
-
-function Card(props: {
-  c: CardType;
-  onDelete: () => void;
-  children: React.ReactNode;
-}) {
-  const { c, onDelete, children } = props;
-
-  return (
-    <article style={{ border: "1px solid #ccc", padding: 10 }}>
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <strong style={{ flex: 1 }}>{c.title}</strong>
-        <button type="button" onClick={onDelete}>
-          削除
-        </button>
-      </div>
-
-      <div>仮説:{c.hypothesis}</div>
-      <div>成功:{c.success}</div>
-
-      <div style={{ marginTop: 8 }}>{children}</div>
-    </article>
   );
 }
