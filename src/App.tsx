@@ -83,6 +83,12 @@ export default function App() {
     (c) => !c.completedAt || new Date(c.completedAt).toDateString() === today,
   );
 
+  //7日前の日付を計算する
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const weekDone = done.filter((c) => {
+    return c.completedAt && new Date(c.completedAt).getTime() > weekAgo;
+  });
+
   function onDeleteCard(id: string) {
     deleteCard(id);
     cleanupClosing(id);
@@ -177,6 +183,9 @@ export default function App() {
               <h2 className="font-bold text-base text-gray-700 m-0">
                 ログ一覧
               </h2>
+              <span className="text-sm text-slate-400">
+                今週 {weekDone.length}件
+              </span>
               {done.length > 0 && (
                 <>
                   <button
