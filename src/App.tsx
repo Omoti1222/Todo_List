@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
+import { useConvexCards } from "./hooks/useConvexCards";
 import { AddCardForm } from "./features/cards/AddCardForm";
 import { Board } from "./features/cards/Board";
 import { LogItem } from "./features/cards/LogItem";
 import { HandoverForm } from "./features/handover/HandoverForm";
 import { HandoverList } from "./features/handover/HandoverList";
-import { useCardsStorage } from "./hooks/useCardsStorage";
 import { useClosing } from "./hooks/useClosing";
 import { useHandoverStorage } from "./hooks/useHandoverStorage";
 import { analyzeDone } from "./utils/analyzeDone";
 import type { AnalyzeResult, Experiment } from "./utils/analyzeDone";
 import { AnalysisView } from "./features/cards/AnalysisView";
 
-const STORAGE_KEY = "learning_log_cards_v1";
+// const STORAGE_KEY = "learning_log_cards_v1";
 const ANALYSIS_KEY = "learning_log_analysis_v2";
 
 type PersistedAnalysis = { analysis: AnalyzeResult | null; added: number[] };
@@ -52,7 +52,6 @@ export default function App() {
 
   const {
     cards,
-    setCards,
     planned,
     doing,
     done,
@@ -60,7 +59,8 @@ export default function App() {
     deleteCard,
     setStatus,
     editTitle,
-  } = useCardsStorage(STORAGE_KEY);
+    complete,
+  } = useConvexCards();
 
   const {
     closing,
@@ -69,7 +69,7 @@ export default function App() {
     cancelClosing,
     confirmDone,
     cleanupClosing,
-  } = useClosing({ cards, setCards });
+  } = useClosing({ cards, onComplete: complete });
 
   const {
     cards: handoverCards,

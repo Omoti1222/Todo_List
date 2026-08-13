@@ -26,3 +26,54 @@ export const add = mutation({
     });
   },
 });
+
+export const remove = mutation({
+  args: {
+    id: v.id("cards"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
+  },
+});
+
+export const editTitle = mutation({
+  args: {
+    id: v.id("cards"),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { title: args.title });
+  },
+});
+
+export const updateStatus = mutation({
+  args: {
+    id: v.id("cards"),
+    status: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      status: args.status,
+      completedAt:
+        args.status === "done" ? new Date().toISOString() : undefined,
+    });
+  },
+});
+
+export const complete = mutation({
+  args: {
+    id: v.id("cards"),
+    result: v.string(),
+    learning: v.string(),
+    comment: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      status: "done",
+      result: args.result,
+      learning: args.learning,
+      comment: args.comment,
+      completedAt: new Date().toISOString(),
+    });
+  },
+});

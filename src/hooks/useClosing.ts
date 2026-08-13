@@ -14,9 +14,14 @@ const emptyDraft: ClosingDraft = {
 
 export function useClosing(args: {
   cards: CardType[];
-  setCards: React.Dispatch<React.SetStateAction<CardType[]>>;
+  onComplete: (input: {
+    id: string;
+    result: string;
+    learning: string;
+    comment: string;
+  }) => void;
 }) {
-  const { cards, setCards } = args;
+  const { cards, onComplete } = args;
 
   const [closing, setClosing] = useState<ClosingMap>({});
 
@@ -55,20 +60,7 @@ export function useClosing(args: {
     const learning = (draft?.learning ?? "").trim();
     const comment = (draft?.comment ?? "").trim();
 
-    setCards((prev) =>
-      prev.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              status: "done",
-              result,
-              learning,
-              comment,
-              completedAt: new Date().toISOString(),
-            }
-          : c,
-      ),
-    );
+    onComplete({ id, result, learning, comment });
 
     cancelClosing(id);
   }
