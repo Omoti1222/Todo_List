@@ -12,6 +12,7 @@ import { useHandoverStorage } from "./hooks/useHandoverStorage";
 import { analyzeDone } from "./utils/analyzeDone";
 import type { AnalyzeResult, Experiment } from "./utils/analyzeDone";
 import { AnalysisView } from "./features/cards/AnalysisView";
+import { GlobalMemo } from "./components/GlobalMemo";
 
 // const STORAGE_KEY = "learning_log_cards_v1";
 const ANALYSIS_KEY = "learning_log_analysis_v2";
@@ -138,8 +139,8 @@ export default function App() {
     "border-slate-200 text-slate-400 bg-white hover:bg-slate-50";
 
   return (
-    <div className="p-4 max-w-[1000px] mx-auto">
-      <div className="min-w-0">
+    <div className="p-4 max-w-[1300px] mx-auto flex gap-4 items-start">
+      <div className="flex-1 min-w-0">
         <div className="flex gap-2 mb-4">
           <button
             type="button"
@@ -282,6 +283,11 @@ export default function App() {
           </>
         )}
       </div>
+      {tab === "handover" && (
+        <div className="w-[280px] shrink-0">
+          <GlobalMemo />
+        </div>
+      )}
     </div>
   );
 }
